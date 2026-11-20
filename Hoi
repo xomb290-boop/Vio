@@ -1,0 +1,110 @@
+local P,R,U=game:GetService("Players"),game:GetService("RunService"),game:GetService("UserInputService")
+local lp,pg=P.LocalPlayer,P.LocalPlayer:WaitForChild("PlayerGui")
+for _,n in ipairs({"BigHubGui","BigHubEsp"})do if pg:FindFirstChild(n)then pg[n]:Destroy()end end
+
+local c={aim=false,lock=false,dodge=false,sink=false,n=false,d=false,h=false,i=false,fov=140,ci=1,ti=1,open=true,so=1.6,ds=1.45,fr=0.12}
+local cols={{n="เขียว",c=Color3.fromRGB(0,255,100)},{n="แดง",c=Color3.fromRGB(255,60,60)},{n="ขาว",c=Color3.new(1,1,1)}}
+local tgs={{n="หัว",p="Head",y=0},{n="ลำตัว",p="UpperTorso",y=0},{n="ใต้คาง",p="Head",y=-.35}}
+
+local g=Instance.new("ScreenGui",pg);g.Name="BigHubGui";g.ResetOnSpawn=false;g.IgnoreGuiInset=true
+local ef=Instance.new("Folder",pg);ef.Name="BigHubEsp"
+local fc=Instance.new("Frame",g);fc.AnchorPoint=Vector2.new(.5,.5);fc.Position=UDim2.fromScale(.5,.5);fc.Size=UDim2.fromOffset(c.fov*2,c.fov*2);fc.BackgroundTransparency=1;fc.Visible=false
+local fs=Instance.new("UIStroke",fc);fs.Color=cols[1].c;fs.Thickness=2;Instance.new("UICorner",fc).CornerRadius=UDim.new(1,0)
+
+local function rd(o,r)Instance.new("UICorner",o).CornerRadius=UDim.new(0,r)end
+local tog=Instance.new("TextButton",g);tog.Size=UDim2.fromOffset(42,42);tog.Position=UDim2.new(1,-54,0,14);tog.BackgroundColor3=Color3.fromRGB(25,25,32);tog.Text="UI";tog.TextColor3=Color3.fromRGB(0,255,140);tog.TextSize=13;tog.Font=Enum.Font.GothamBold;rd(tog,99)
+
+local w=Instance.new("Frame",g);w.Size=UDim2.fromOffset(252,312);w.Position=UDim2.new(0,18,.5,-156);w.BackgroundColor3=Color3.fromRGB(18,18,24);w.BackgroundTransparency=.08;rd(w,12)
+Instance.new("UIStroke",w).Color=Color3.fromRGB(0,255,140)
+local hd=Instance.new("TextLabel",w);hd.Size=UDim2.new(1,0,0,30);hd.BackgroundColor3=Color3.fromRGB(28,30,40);hd.Text="bigHub • ลากได้";hd.TextColor3=Color3.fromRGB(0,255,140);hd.TextSize=13;hd.Font=Enum.Font.GothamBold;hd.Active=true;rd(hd,12)
+
+local dr,di,ds0,fs0
+hd.InputBegan:Connect(function(i)if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dr,di,ds0,fs0=true,i,i.Position,w.Position end end)
+UIS.InputChanged:Connect(function(i)if dr and i==di then local d=i.Position-ds0;w.Position=UDim2.new(fs0.X.Scale,fs0.X.Offset+d.X,fs0.Y.Scale,fs0.Y.Offset+d.Y)end end)
+UIS.InputEnded:Connect(function(i)if i==di then dr=false end end)
+
+local function btn(t,x,y,col)local b=Instance.new("TextButton",w);b.Size=UDim2.fromOffset(110,28);b.Position=UDim2.fromOffset(x,y);b.BackgroundColor3=col;b.Text=t;b.TextColor3=Color3.new(1,1,1);b.TextSize=11;b.Font=Enum.Font.GothamBold;rd(b,7);return b end
+local bAim=btn("Aimbot: ปิด",12,36,Color3.fromRGB(175,45,45))
+local bLock=btn("กันล็อค: ปิด",130,36,Color3.fromRGB(115,55,165))
+local bSink=btn("มุดดิน: ปิด",12,70,Color3.fromRGB(100,70,45))
+local bDodge=btn("หลบกระสุน: ปิด",130,70,Color3.fromRGB(150,95,30))
+local bTarg=btn("ล็อค: หัว",12,104,Color3.fromRGB(60,65,95))
+local bCol=btn("FOV: เขียว",130,104,Color3.fromRGB(35,130,85))
+local bN=btn("ชื่อขาว: ปิด",12,138,Color3.fromRGB(55,60,75))
+local bD=btn("ระยะ: ปิด",130,138,Color3.fromRGB(55,60,75))
+local bH=btn("เรืองแสง: ปิด",12,172,Color3.fromRGB(55,60,75))
+local bI=btn("เลือด&รถ: ปิด",130,172,Color3.fromRGB(55,60,75))
+
+local fl=Instance.new("TextLabel",w);fl.Size=UDim2.new(1,-24,0,18);fl.Position=UDim2.fromOffset(12,204);fl.BackgroundTransparency=1;fl.Text="FOV: "..c.fov;fl.TextColor3=Color3.new(1,1,1);fl.TextSize=11;fl.Font=Enum.Font.GothamBold
+local bSub=btn("- FOV",12,224,Color3.fromRGB(165,90,45));local bAdd=btn("+ FOV",130,224,Color3.fromRGB(45,100,175))
+local st=Instance.new("TextLabel",w);st.Size=UDim2.new(1,-24,0,40);st.Position=UDim2.fromOffset(12,260);st.BackgroundColor3=Color3.fromRGB(28,30,40);st.Text="พร้อมใช้ • กระโดดปกติ";st.TextColor3=Color3.fromRGB(170,255,200);st.TextSize=11;st.Font=Enum.Font.GothamBold;rd(st,7)
+
+local rjM,rjC0,hip0,col0,sOn=nil,nil,nil,{},false
+local function air(h)local s=h and h:GetState();return s==Enum.HumanoidStateType.Jumping or s==Enum.HumanoidStateType.Freefall end
+local function rst()
+	local ch,cm=lp.Character,workspace.CurrentCamera;local h=ch and ch:FindFirstChildOfClass("Humanoid")
+	if rjM and rjM.Parent and rjC0 then rjM.C0=rjC0 end;if h and hip0 then h.HipHeight=hip0 end
+	for p,v in pairs(col0)do if p and p.Parent and p:IsA("BasePart")then p.CanCollide=v end end
+	if h and cm and cm.CameraSubject~=h then cm.CameraSubject=h end;rjM,rjC0,hip0,sOn=nil,nil,nil,false;table.clear(col0)
+end
+local function apS()
+	local ch=lp.Character;local h,r=ch and ch:FindFirstChildOfClass("Humanoid"),ch and ch:FindFirstChild("HumanoidRootPart")
+	if not ch or not h or not r or h.Health<=0 or not c.sink then rst();return end
+	if not sOn then hip0=h.HipHeight;for _,p in ipairs(ch:GetDescendants())do if p:IsA("BasePart")and p.Name~="HumanoidRootPart"and p.Name~="LeftFoot"and p.Name~="RightFoot"then col0[p]=p.CanCollide;p.CanCollide=false end end;h.HipHeight=math.max(.2,hip0-c.so);sOn=true end
+	local j=r:FindFirstChild("RootJoint")or ch:FindFirstChild("RootJoint",true)
+	if j and j:IsA("Motor6D")then if rjM~=j then rjM,rjC0=j,j.C0 end;j.C0=rjC0*CFrame.new(0,-.75,0)end
+end
+
+local lTog,tL,lOff,dDir,tF=false,os.clock(),Vector3.zero,1,os.clock()
+local function sb(b,on,t1,t2,c1,c2)b.Text=on and t1 or t2;b.BackgroundColor3=on and c1 or c2 end
+tog.MouseButton1Click:Connect(function()c.open=not c.open;w.Visible=c.open end)
+bAim.MouseButton1Click:Connect(function()c.aim=not c.aim;fc.Visible=c.aim;sb(bAim,c.aim,"Aimbot: เปิด","Aimbot: ปิด",Color3.fromRGB(40,190,80),Color3.fromRGB(175,45,45))end)
+bLock.MouseButton1Click:Connect(function()c.lock=not c.lock;if not c.lock and lOff.Magnitude>0 then local r=lp.Character and lp.Character:FindFirstChild("HumanoidRootPart");if r then r.CFrame-=lOff end;lOff=Vector3.zero end;sb(bLock,c.lock,"กันล็อค: เปิด","กันล็อค: ปิด",Color3.fromRGB(165,65,235),Color3.fromRGB(115,55,165))end)
+bSink.MouseButton1Click:Connect(function()c.sink=not c.sink;if c.sink then apS()else rst()end;sb(bSink,c.sink,"มุดดิน: เปิด","มุดดิน: ปิด",Color3.fromRGB(0,180,110),Color3.fromRGB(100,70,45))end)
+bDodge.MouseButton1Click:Connect(function()c.dodge=not c.dodge;sb(bDodge,c.dodge,"หลบกระสุน: เปิด","หลบกระสุน: ปิด",Color3.fromRGB(225,140,25),Color3.fromRGB(150,95,30))end)
+bTarg.MouseButton1Click:Connect(function()c.ti=(c.ti%#tgs)+1;bTarg.Text="ล็อค: "..tgs[c.ti].n end)
+bCol.MouseButton1Click:Connect(function()c.ci=(c.ci%#cols)+1;fs.Color=cols[c.ci].c;bCol.Text="FOV: "..cols[c.ci].n end)
+for _,x in ipairs({{bN,"n","ชื่อขาว"},{bD,"d","ระยะ"},{bH,"h","เรืองแสง"},{bI,"i","เลือด&รถ"}})do x[1].MouseButton1Click:Connect(function()c[x[2]]=not c[x[2]];sb(x[1],c[x[2]],x[3]..": เปิด",x[3]..": ปิด",Color3.fromRGB(0,165,215),Color3.fromRGB(55,60,75))end)end
+local function uf()fc.Size=UDim2.fromOffset(c.fov*2,c.fov*2);fl.Text="FOV: "..c.fov end
+bAdd.MouseButton1Click:Connect(function()c.fov=math.clamp(c.fov+20,50,400);uf()end)
+bSub.MouseButton1Click:Connect(function()c.fov=math.clamp(c.fov-20,50,400);uf()end)
+lp.CharacterAdded:Connect(function()rjM,rjC0,hip0,sOn=nil,nil,nil,false;table.clear(col0);lOff=Vector3.zero end)
+
+R.RenderStepped:Connect(function()
+	local cm=workspace.CurrentCamera;if not cm then return end
+	local ch=lp.Character;local h,r=ch and ch:FindFirstChildOfClass("Humanoid"),ch and ch:FindFirstChild("HumanoidRootPart")
+	if h and cm.CameraSubject~=h then cm.CameraSubject=h end
+	if c.sink then apS()elseif sOn then rst()end
+
+	if h and r and h.Health>0 then
+		if c.dodge and not h.SeatPart and not air(h)then
+			local hit=false
+			for _,p in ipairs(P:GetPlayers())do if p~=lp and p.Character then local eh,eo=p.Character:FindFirstChildOfClass("Humanoid"),p.Character:FindFirstChild("Head")or p.Character:FindFirstChild("HumanoidRootPart");if eh and eh.Health>0 and eo then local df=r.Position-eo.Position;local d=df.Magnitude;if d>1 and d<185 and eo.CFrame.LookVector.Unit:Dot(df.Unit)>.85 then hit=true;break end end end end
+			if hit then if os.clock()-tF>=c.fr then dDir,tF=-dDir,os.clock() end;local sv=Vector3.new(cm.CFrame.RightVector.X,0,cm.CFrame.RightVector.Z);if sv.Magnitude>.01 then r.CFrame+=sv.Unit*dDir*c.ds end end
+		end
+		if c.lock and not air(h)and os.clock()-tL>=.05 then tL,lTog=os.clock(),not lTog;if lOff.Magnitude>0 then r.CFrame-=lOff;lOff=Vector3.zero end;local s=lTog and 1 or -1;lOff=Vector3.new(s*1.35,0,-s*1.35);r.CFrame+=lOff
+		elseif not c.lock and lOff.Magnitude>0 then r.CFrame-=lOff;lOff=Vector3.zero end
+	end
+
+	local tx=c.n or c.d or c.i
+	for _,p in ipairs(P:GetPlayers())do if p~=lp then
+		local ec,hd,er,eh=p.Character,p.Character and p.Character:FindFirstChild("Head"),p.Character and p.Character:FindFirstChild("HumanoidRootPart"),p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+		local ok=ec and hd and er and eh and eh.Health>0;local tg,hl=ef:FindFirstChild("T_"..p.Name),ef:FindFirstChild("H_"..p.Name)
+		if ok and tx then
+			if not tg then tg=Instance.new("BillboardGui",ef);tg.Name="T_"..p.Name;tg.AlwaysOnTop=true;tg.Size=UDim2.fromOffset(190,32);tg.StudsOffset=Vector3.new(0,2.8,0);local lb=Instance.new("TextLabel",tg);lb.Name="L";lb.Size=UDim2.fromScale(1,1);lb.BackgroundTransparency=1;lb.TextColor3=Color3.new(1,1,1);lb.TextStrokeTransparency=.35;lb.TextSize=14;lb.Font=Enum.Font.GothamBold end
+			tg.Adornee,tg.Enabled=hd,true;local o={}
+			if c.n then table.insert(o,p.DisplayName)end
+			if c.i then table.insert(o,math.clamp(math.floor((eh.Health/math.max(eh.MaxHealth,1))*100),0,100).."%"..(eh.SeatPart and" [รถ]"or""))end
+			if c.d and r then table.insert(o,"["..math.floor((er.Position-r.Position).Magnitude/3.57).."m]")end
+			tg.L.Text=table.concat(o," ")
+		elseif tg then tg.Enabled=false end
+		if ok and c.h then if not hl then hl=Instance.new("Highlight",ef);hl.Name="H_"..p.Name;hl.FillTransparency=.72;hl.OutlineTransparency=.1 end;hl.Adornee,hl.Enabled=ec,true
+		elseif hl then hl.Enabled=false end
+	end end
+
+	if c.aim then
+		local ct,ti,bp,bd=Vector2.new(cm.ViewportSize.X/2,cm.ViewportSize.Y/2),tgs[c.ti],nil,c.fov
+		for _,p in ipairs(P:GetPlayers())do if p~=lp and p.Character then local eh=p.Character:FindFirstChild("Humanoid");if eh and eh.Health>0 then local pt=p.Character:FindFirstChild(ti.p)or p.Character:FindFirstChild("Torso")or p.Character:FindFirstChild("Head");if pt then local vp,vs=cm:WorldToViewportPoint(pt.Position);if vs then local d=(Vector2.new(vp.X,vp.Y)-ct).Magnitude;if d<bd then bd,bp=d,pt end end end end end
+		if bp then cm.CFrame=CFrame.new(cm.CFrame.Position,bp.Position+Vector3.new(0,ti.y,0))end
+	end
+end)
